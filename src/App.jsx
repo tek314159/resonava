@@ -211,6 +211,7 @@ function App() {
     isPlaying: false,
     bpm: 120,
     beatsPerMeasure: 4,
+    beatValue: 4,
     accentFirstBeat: true,
     subdivisions: false,
     subdivisionType: 'simple', // 'simple' or 'compound'
@@ -349,7 +350,7 @@ function App() {
         startMetronome();
       }, 50);
     }
-  }, [metronome.bpm, metronome.beatsPerMeasure, metronome.accentFirstBeat, metronome.subdivisions, metronome.subdivisionValue]);
+  }, [metronome.bpm, metronome.beatsPerMeasure, metronome.beatValue, metronome.accentFirstBeat, metronome.subdivisions, metronome.subdivisionValue]);
 
   // Cleanup audio context on unmount
   useEffect(() => {
@@ -412,51 +413,62 @@ function App() {
             />
           </div>
           
+          <div className="time-signature">
+            <div>
+              <label>Beats per measure: <span style={{fontWeight: 'bold', color: '#646cff'}}>{metronome.beatsPerMeasure}</span></label>
+              <select 
+                key={`beats-${metronome.beatsPerMeasure}`}
+                value={metronome.beatsPerMeasure}
+                onChange={(e) => setMetronome(prev => ({ ...prev, beatsPerMeasure: parseInt(e.target.value) }))}
+              >
+                <option value={2}>2</option>
+                <option value={3}>3</option>
+                <option value={4}>4</option>
+                <option value={5}>5</option>
+                <option value={6}>6</option>
+                <option value={7}>7</option>
+                <option value={8}>8</option>
+              </select>
+            </div>
+            <div>
+              <label>Beat value: <span style={{fontWeight: 'bold', color: '#646cff'}}>{metronome.beatValue}</span></label>
+              <select 
+                key={`beat-value-${metronome.beatValue}`}
+                value={metronome.beatValue}
+                onChange={(e) => setMetronome(prev => ({ ...prev, beatValue: parseInt(e.target.value) }))}
+              >
+                <option value={2}>2</option>
+                <option value={4}>4</option>
+                <option value={8}>8</option>
+                <option value={16}>16</option>
+              </select>
+            </div>
+          </div>
+          
           <div className="options">
-            <div className="option-row">
-              <label>
-                <input 
-                  type="checkbox" 
-                  checked={metronome.accentFirstBeat}
-                  onChange={(e) => setMetronome(prev => ({ ...prev, accentFirstBeat: e.target.checked }))}
-                />
-                Accent first beat
-              </label>
-            </div>
+            <label>
+              <input 
+                type="checkbox" 
+                checked={metronome.accentFirstBeat}
+                onChange={(e) => setMetronome(prev => ({ ...prev, accentFirstBeat: e.target.checked }))}
+              />
+              Accent first beat
+            </label>
             
-            <div className="option-row">
-              <label>
-                <input 
-                  type="checkbox" 
-                  checked={metronome.subdivisions}
-                  onChange={(e) => setMetronome(prev => ({ ...prev, subdivisions: e.target.checked }))}
-                />
-                Enable subdivisions
-              </label>
-            </div>
-            
-            <div className="time-signature">
-              <div>
-                <label>Beats per measure:</label>
-                <select 
-                  value={metronome.beatsPerMeasure}
-                  onChange={(e) => setMetronome(prev => ({ ...prev, beatsPerMeasure: parseInt(e.target.value) }))}
-                >
-                  <option value={2}>2</option>
-                  <option value={3}>3</option>
-                  <option value={4}>4</option>
-                  <option value={5}>5</option>
-                  <option value={6}>6</option>
-                  <option value={7}>7</option>
-                  <option value={8}>8</option>
-                </select>
-              </div>
-            </div>
+            <label>
+              <input 
+                type="checkbox" 
+                checked={metronome.subdivisions}
+                onChange={(e) => setMetronome(prev => ({ ...prev, subdivisions: e.target.checked }))}
+              />
+              Enable subdivisions
+            </label>
             
             {metronome.subdivisions && (
               <div className="subdivision-controls">
-                <label>Subdivision type:</label>
+                <label>Subdivision type: <span style={{fontWeight: 'bold', color: '#646cff'}}>{metronome.subdivisionType}</span></label>
                 <select 
+                  key={`subdivision-${metronome.subdivisionType}`}
                   value={metronome.subdivisionType}
                   onChange={(e) => {
                     const type = e.target.value;
@@ -482,7 +494,7 @@ function App() {
           </button>
           
           <div className="time-signature-display">
-            {metronome.beatsPerMeasure}/4
+            {metronome.beatsPerMeasure}/{metronome.beatValue}
             {metronome.subdivisions && ` (with ${metronome.subdivisionType} subdivisions)`}
           </div>
         </div>
