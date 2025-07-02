@@ -175,9 +175,80 @@ h1 {
   border: none;
 }
 
+.volume-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.volume-section label {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #333;
+}
+
+.volume-slider {
+  width: 100%;
+  max-width: 300px;
+  height: 6px;
+  border-radius: 3px;
+  background: #ddd;
+  outline: none;
+  -webkit-appearance: none;
+}
+
+.volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #28a745;
+  cursor: pointer;
+}
+
+.volume-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #28a745;
+  cursor: pointer;
+  border: none;
+}
+
+.beats-slider {
+  width: 100%;
+  max-width: 300px;
+  height: 6px;
+  border-radius: 3px;
+  background: #ddd;
+  outline: none;
+  -webkit-appearance: none;
+}
+
+.beats-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #646cff;
+  cursor: pointer;
+}
+
+.beats-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #646cff;
+  cursor: pointer;
+  border: none;
+}
+
 .time-signature {
   display: flex;
-  justify-content: space-around;
+  justify-content: center;
   gap: 1rem;
 }
 
@@ -199,6 +270,8 @@ h1 {
   border-radius: 0.5rem;
   background: #fff;
   font-size: 1rem;
+  cursor: pointer;
+  min-width: 80px;
 }
 
 .options {
@@ -240,12 +313,40 @@ h1 {
   color: #555;
 }
 
-.subdivision-controls select {
-  padding: 0.5rem;
-  border: 1px solid #ddd;
+.subdivision-buttons {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-top: 0.5rem;
+}
+
+.subdivision-btn {
+  padding: 0.75rem 1.5rem;
+  border: 2px solid #646cff;
   border-radius: 0.5rem;
   background: #fff;
-  font-size: 1rem;
+  color: #646cff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 120px;
+}
+
+.subdivision-btn:hover {
+  background: #f0f2ff;
+  transform: translateY(-1px);
+}
+
+.subdivision-btn.active {
+  background: #646cff;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(100, 108, 255, 0.3);
+}
+
+.subdivision-btn.active:hover {
+  background: #4b52c7;
+  transform: translateY(-1px);
 }
 
 .metronome-btn {
@@ -343,10 +444,30 @@ h1 {
   .time-signature {
     flex-direction: column;
     gap: 1rem;
+    align-items: center;
   }
   
   .bpm-slider {
     max-width: 250px;
+  }
+  
+  .beats-slider {
+    max-width: 250px;
+  }
+  
+  .volume-slider {
+    max-width: 250px;
+  }
+  
+  .subdivision-buttons {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .subdivision-btn {
+    min-width: 200px;
+    padding: 0.6rem 1rem;
+    font-size: 0.85rem;
   }
 }
 

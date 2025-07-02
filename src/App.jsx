@@ -211,7 +211,7 @@ function App() {
     isPlaying: false,
     bpm: 120,
     beatsPerMeasure: 4,
-    beatValue: 4,
+    volume: 0.5, // 0.0 to 1.0
     accentFirstBeat: true,
     subdivisions: false,
     subdivisionType: 'simple', // 'simple' or 'compound'
@@ -269,8 +269,10 @@ function App() {
     // Different frequencies for accent vs regular beat
     oscillator.frequency.setValueAtTime(isAccent ? 800 : 600, audioContext.currentTime);
     
-    // Different volumes
-    gainNode.gain.setValueAtTime(isAccent ? 0.3 : 0.2, audioContext.currentTime);
+    // Apply volume setting to different volumes
+    const baseVolume = isAccent ? 0.3 : 0.2;
+    const adjustedVolume = baseVolume * metronome.volume;
+    gainNode.gain.setValueAtTime(adjustedVolume, audioContext.currentTime);
     gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
     
     oscillator.start(audioContext.currentTime);
@@ -287,7 +289,8 @@ function App() {
     
     // Gentle subdivision click
     oscillator.frequency.setValueAtTime(400, audioContext.currentTime);
-    gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+    const adjustedVolume = 0.1 * metronome.volume;
+    gainNode.gain.setValueAtTime(adjustedVolume, audioContext.currentTime);
     gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.05);
     
     oscillator.start(audioContext.currentTime);
@@ -355,7 +358,7 @@ function App() {
         startMetronome();
       }, 50);
     }
-  }, [metronome.bpm, metronome.beatsPerMeasure, metronome.beatValue, metronome.accentFirstBeat, metronome.subdivisions, metronome.subdivisionValue]);
+  }, [metronome.bpm, metronome.beatsPerMeasure, metronome.volume, metronome.accentFirstBeat, metronome.subdivisions, metronome.subdivisionValue]);
 
   // Cleanup audio context on unmount
   useEffect(() => {
@@ -418,35 +421,30 @@ function App() {
             />
           </div>
           
+          <div className="volume-section">
+            <label>Volume: {Math.round(metronome.volume * 100)}%</label>
+            <input 
+              type="range" 
+              min="0" 
+              max="1" 
+              step="0.1"
+              value={metronome.volume}
+              onChange={(e) => setMetronome(prev => ({ ...prev, volume: parseFloat(e.target.value) }))}
+              className="volume-slider"
+            />
+          </div>
+          
           <div className="time-signature">
             <div>
               <label>Beats per measure: <span style={{fontWeight: 'bold', color: '#646cff'}}>{metronome.beatsPerMeasure}</span></label>
-              <select 
-                key={`beats-${metronome.beatsPerMeasure}`}
+              <input 
+                type="range" 
+                min="2" 
+                max="16" 
                 value={metronome.beatsPerMeasure}
                 onChange={(e) => setMetronome(prev => ({ ...prev, beatsPerMeasure: parseInt(e.target.value) }))}
-              >
-                <option value={2}>2</option>
-                <option value={3}>3</option>
-                <option value={4}>4</option>
-                <option value={5}>5</option>
-                <option value={6}>6</option>
-                <option value={7}>7</option>
-                <option value={8}>8</option>
-              </select>
-            </div>
-            <div>
-              <label>Beat value: <span style={{fontWeight: 'bold', color: '#646cff'}}>{metronome.beatValue}</span></label>
-              <select 
-                key={`beat-value-${metronome.beatValue}`}
-                value={metronome.beatValue}
-                onChange={(e) => setMetronome(prev => ({ ...prev, beatValue: parseInt(e.target.value) }))}
-              >
-                <option value={2}>2</option>
-                <option value={4}>4</option>
-                <option value={8}>8</option>
-                <option value={16}>16</option>
-              </select>
+                className="beats-slider"
+              />
             </div>
           </div>
           
@@ -471,22 +469,29 @@ function App() {
             
             {metronome.subdivisions && (
               <div className="subdivision-controls">
-                <label>Subdivision type: <span style={{fontWeight: 'bold', color: '#646cff'}}>{metronome.subdivisionType}</span></label>
-                <select 
-                  key={`subdivision-${metronome.subdivisionType}`}
-                  value={metronome.subdivisionType}
-                  onChange={(e) => {
-                    const type = e.target.value;
-                    setMetronome(prev => ({ 
+                <label>Subdivision type:</label>
+                <div className="subdivision-buttons">
+                  <button
+                    className={`subdivision-btn ${metronome.subdivisionType === 'simple' ? 'active' : ''}`}
+                    onClick={() => setMetronome(prev => ({ 
                       ...prev, 
-                      subdivisionType: type,
-                      subdivisionValue: type === 'simple' ? 2 : 3
-                    }));
-                  }}
-                >
-                  <option value="simple">Simple (2:1)</option>
-                  <option value="compound">Compound (3:1)</option>
-                </select>
+                      subdivisionType: 'simple',
+                      subdivisionValue: 2
+                    }))}
+                  >
+                    Simple (2:1)
+                  </button>
+                  <button
+                    className={`subdivision-btn ${metronome.subdivisionType === 'compound' ? 'active' : ''}`}
+                    onClick={() => setMetronome(prev => ({ 
+                      ...prev, 
+                      subdivisionType: 'compound',
+                      subdivisionValue: 3
+                    }))}
+                  >
+                    Compound (3:1)
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -499,7 +504,7 @@ function App() {
           </button>
           
           <div className="time-signature-display">
-            {metronome.beatsPerMeasure}/{metronome.beatValue}
+            {metronome.beatsPerMeasure}/4
             {metronome.subdivisions && ` (with ${metronome.subdivisionType} subdivisions)`}
           </div>
         </div>
