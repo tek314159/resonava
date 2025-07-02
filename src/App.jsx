@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import './App.css'
 
+// Import the chord progression component (we'll create this)
+import ChordProgressionGenerator from './components/ChordProgressionGenerator'
+
 // Circle of Fifths keys (no D#, G#, etc.)
 const majorKeys = [
   'C', 'G', 'D', 'A', 'E', 'B', 'F#', 'Db', 'Ab', 'Eb', 'Bb', 'F'
@@ -243,311 +246,77 @@ function getChordColor(quality) {
 }
 
 function App() {
-  const [result, setResult] = useState({ key: '', mode: '', progression: [], scale: [], chords: [], relMaj: null });
-  const [metronome, setMetronome] = useState({
-    isPlaying: false,
-    bpm: 120,
-    beatsPerMeasure: 4,
-    volume: 0.5, // 0.0 to 1.0
-    accentFirstBeat: true,
-    subdivisions: false,
-    subdivisionType: 'simple', // 'simple' or 'compound'
-    subdivisionValue: 2 // 2 = eighth notes, 3 = triplets, etc.
-  });
-  
-  const metronomeRef = useRef(null);
-  const intervalRef = useRef(null);
-  const beatCountRef = useRef(0);
-  const audioContextRef = useRef(null);
-  const isPlayingRef = useRef(false);
+  const [currentPage, setCurrentPage] = useState('chord-progression')
+  const [menuOpen, setMenuOpen] = useState(false)
 
-  function generate() {
-    const mode = weightedRandom(modes);
-    let key = '';
-    if (mode === 'Major (Ionian)' || mode === 'Lydian' || mode === 'Mixolydian') {
-      key = getRandom(majorKeys);
-    } else {
-      key = getRandom(minorKeys);
-    }
-    const scale = getScaleNotesSpelled(key, mode);
-    const qualities = MODE_CHORDS[mode];
-    const progDegrees = randomProgression(mode);
-    const chords = progDegrees.map(d => ({
-      degree: d,
-      roman: getRoman(d, mode, qualities[d]),
-      quality: qualities[d],
-      notes: getChordNotes(scale, d, qualities[d]),
-    }));
-    const relMaj = getRelativeMajor(key, mode);
-    setResult({ key, mode, progression: progDegrees, scale, chords, relMaj });
+  const toggleMenu = () => {
+    setMenuOpen(!menuOpen)
   }
 
-  useEffect(() => {
-    generate();
-  }, []);
+  const closeMenu = () => {
+    setMenuOpen(false)
+  }
 
-  // Initialize audio context
-  const getAudioContext = () => {
-    if (!audioContextRef.current) {
-      audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+  const navigateTo = (page) => {
+    setCurrentPage(page)
+    closeMenu()
+  }
+
+  const renderPage = () => {
+    switch (currentPage) {
+      case 'chord-progression':
+        return <ChordProgressionGenerator />
+      default:
+        return <ChordProgressionGenerator />
     }
-    return audioContextRef.current;
-  };
-
-  // Metronome functions
-  const playClick = (isAccent = false) => {
-    const audioContext = getAudioContext();
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-    
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-    
-    // Different frequencies for accent vs regular beat
-    oscillator.frequency.setValueAtTime(isAccent ? 800 : 600, audioContext.currentTime);
-    
-    // Apply volume setting to different volumes
-    const baseVolume = isAccent ? 0.3 : 0.2;
-    const adjustedVolume = baseVolume * metronome.volume;
-    gainNode.gain.setValueAtTime(adjustedVolume, audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
-    
-    oscillator.start(audioContext.currentTime);
-    oscillator.stop(audioContext.currentTime + 0.1);
-  };
-
-  const playSubdivision = () => {
-    const audioContext = getAudioContext();
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-    
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-    
-    // Gentle subdivision click
-    oscillator.frequency.setValueAtTime(400, audioContext.currentTime);
-    const adjustedVolume = 0.1 * metronome.volume;
-    gainNode.gain.setValueAtTime(adjustedVolume, audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.05);
-    
-    oscillator.start(audioContext.currentTime);
-    oscillator.stop(audioContext.currentTime + 0.05);
-  };
-
-  const startMetronome = () => {
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    
-    const interval = (60 / metronome.bpm) * 1000;
-    beatCountRef.current = 0;
-    
-    // Set playing state immediately
-    setMetronome(prev => ({ ...prev, isPlaying: true }));
-    isPlayingRef.current = true;
-    
-    intervalRef.current = setInterval(() => {
-      // Use a ref to track playing state to avoid stale closure issues
-      if (!isPlayingRef.current) return;
-      
-      const isFirstBeat = beatCountRef.current % metronome.beatsPerMeasure === 0;
-      const shouldAccent = isFirstBeat && metronome.accentFirstBeat;
-      
-      playClick(shouldAccent);
-      
-      // Schedule subdivisions if enabled
-      if (metronome.subdivisions && metronome.subdivisionValue > 1) {
-        const subdivisionDelay = interval / metronome.subdivisionValue;
-        for (let i = 1; i < metronome.subdivisionValue; i++) {
-          setTimeout(() => {
-            if (isPlayingRef.current) {
-              playSubdivision();
-            }
-          }, subdivisionDelay * i);
-        }
-      }
-      
-      beatCountRef.current++;
-    }, interval);
-  };
-
-  const stopMetronome = () => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-    setMetronome(prev => ({ ...prev, isPlaying: false }));
-    isPlayingRef.current = false;
-  };
-
-  const toggleMetronome = () => {
-    if (metronome.isPlaying) {
-      stopMetronome();
-    } else {
-      startMetronome();
-    }
-  };
-
-  // Restart metronome when settings change
-  useEffect(() => {
-    if (metronome.isPlaying) {
-      stopMetronome();
-      // Small delay to ensure clean restart
-      setTimeout(() => {
-        startMetronome();
-      }, 50);
-    }
-  }, [metronome.bpm, metronome.beatsPerMeasure, metronome.volume, metronome.accentFirstBeat, metronome.subdivisions, metronome.subdivisionValue]);
-
-  // Cleanup audio context on unmount
-  useEffect(() => {
-    return () => {
-      if (audioContextRef.current) {
-        audioContextRef.current.close();
-      }
-    };
-  }, []);
-
-  const modeTheme = MODE_COLORS[result.mode] || MODE_COLORS['Major (Ionian)'];
+  }
 
   return (
-    <div className="app-container">
-      <div className="container" style={{ 
-        backgroundColor: modeTheme.bg, 
-        color: modeTheme.text,
-        border: `2px solid ${modeTheme.border}` 
-      }}>
-        <h1>Chord Progression Generator</h1>
-        <button className="generate-btn" onClick={generate}>Generate</button>
-        <div className="result">
-          <div><strong>Key:</strong> {result.key}</div>
-          <div><strong>Mode:</strong> {result.mode}</div>
-          <div><strong>Progression:</strong> {result.chords && result.chords.length > 0 ? result.chords.map((c, i) => (
-            <span key={i} style={{ color: getChordColor(c.quality), fontWeight: 'bold' }}>
-              {c.roman}{i < result.chords.length - 1 ? ' - ' : ''}
-            </span>
-          )) : ''}</div>
-        </div>
-        <div className="reference">
-          <h3>Reference</h3>
-          <div><strong>Scale notes:</strong> {result.scale && result.scale.join(', ')}</div>
-          <div><strong>Chords:</strong>
-            <ul style={{textAlign:'left', margin:'0.5em auto', maxWidth:'300px'}}>
-              {result.chords && result.chords.map((c, i) => (
-                <li key={i}>
-                  <strong style={{ color: getChordColor(c.quality) }}>{c.roman}:</strong> {c.notes.join('-')}
-                </li>
-              ))}
-            </ul>
-          </div>
-          {result.relMaj && <div><strong>Relative major:</strong> {result.relMaj} major</div>}
-        </div>
-        <p className="footer">Keys are based on the circle of fifths. Modes are weighted by real-world usage. Progressions are random diatonic chords.</p>
-      </div>
-      
-      <div className="metronome-container">
-        <h2>Metronome</h2>
-        <div className="metronome-controls">
-          <div className="bpm-section">
-            <label>BPM: {metronome.bpm}</label>
-            <input 
-              type="range" 
-              min="40" 
-              max="200" 
-              value={metronome.bpm}
-              onChange={(e) => setMetronome(prev => ({ ...prev, bpm: parseInt(e.target.value) }))}
-              className="bpm-slider"
-            />
-          </div>
-          
-          <div className="volume-section">
-            <label>Volume: {Math.round(metronome.volume * 100)}%</label>
-            <input 
-              type="range" 
-              min="0" 
-              max="1" 
-              step="0.1"
-              value={metronome.volume}
-              onChange={(e) => setMetronome(prev => ({ ...prev, volume: parseFloat(e.target.value) }))}
-              className="volume-slider"
-            />
-          </div>
-          
-          <div className="time-signature">
-            <div>
-              <label>Beats per measure: <span style={{fontWeight: 'bold', color: '#646cff'}}>{metronome.beatsPerMeasure}</span></label>
-              <input 
-                type="range" 
-                min="2" 
-                max="16" 
-                value={metronome.beatsPerMeasure}
-                onChange={(e) => setMetronome(prev => ({ ...prev, beatsPerMeasure: parseInt(e.target.value) }))}
-                className="beats-slider"
-              />
-            </div>
-          </div>
-          
-          <div className="options">
-            <label>
-              <input 
-                type="checkbox" 
-                checked={metronome.accentFirstBeat}
-                onChange={(e) => setMetronome(prev => ({ ...prev, accentFirstBeat: e.target.checked }))}
-              />
-              Accent first beat
-            </label>
-            
-            <label>
-              <input 
-                type="checkbox" 
-                checked={metronome.subdivisions}
-                onChange={(e) => setMetronome(prev => ({ ...prev, subdivisions: e.target.checked }))}
-              />
-              Enable subdivisions
-            </label>
-            
-            {metronome.subdivisions && (
-              <div className="subdivision-controls">
-                <label>Subdivision type:</label>
-                <div className="subdivision-buttons">
-                  <button
-                    className={`subdivision-btn ${metronome.subdivisionType === 'simple' ? 'active' : ''}`}
-                    onClick={() => setMetronome(prev => ({ 
-                      ...prev, 
-                      subdivisionType: 'simple',
-                      subdivisionValue: 2
-                    }))}
-                  >
-                    Simple (2:1)
-                  </button>
-                  <button
-                    className={`subdivision-btn ${metronome.subdivisionType === 'compound' ? 'active' : ''}`}
-                    onClick={() => setMetronome(prev => ({ 
-                      ...prev, 
-                      subdivisionType: 'compound',
-                      subdivisionValue: 3
-                    }))}
-                  >
-                    Compound (3:1)
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-          
+    <div className="app">
+      {/* Menu Bar */}
+      <header className="menu-bar">
+        <div className="menu-bar-content">
+          <h1 className="app-title">Resonava</h1>
           <button 
-            className={`metronome-btn ${metronome.isPlaying ? 'playing' : ''}`}
-            onClick={toggleMetronome}
+            className={`hamburger ${menuOpen ? 'active' : ''}`}
+            onClick={toggleMenu}
+            aria-label="Toggle menu"
           >
-            {metronome.isPlaying ? '⏸ Stop' : '▶ Play'}
+            <span></span>
+            <span></span>
+            <span></span>
           </button>
-          
-          <div className="time-signature-display">
-            {metronome.beatsPerMeasure}/4
-            {metronome.subdivisions && ` (with ${metronome.subdivisionType} subdivisions)`}
-          </div>
         </div>
-      </div>
+      </header>
+
+      {/* Hamburger Menu */}
+      <nav className={`hamburger-menu ${menuOpen ? 'open' : ''}`}>
+        <div className="menu-overlay" onClick={closeMenu}></div>
+        <div className="menu-content">
+          <div className="menu-header">
+            <h2>Menu</h2>
+            <button className="close-menu" onClick={closeMenu}>×</button>
+          </div>
+          <ul className="menu-items">
+            <li>
+              <button 
+                className={`menu-item ${currentPage === 'chord-progression' ? 'active' : ''}`}
+                onClick={() => navigateTo('chord-progression')}
+              >
+                Chord Progression Generator
+              </button>
+            </li>
+            {/* Future menu items can be added here */}
+          </ul>
+        </div>
+      </nav>
+
+      {/* Main Content */}
+      <main className="main-content">
+        {renderPage()}
+      </main>
     </div>
-  );
+  )
 }
 
 export default App
