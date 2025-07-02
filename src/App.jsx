@@ -222,6 +222,7 @@ function App() {
   const intervalRef = useRef(null);
   const beatCountRef = useRef(0);
   const audioContextRef = useRef(null);
+  const isPlayingRef = useRef(false);
 
   function generate() {
     const mode = weightedRandom(modes);
@@ -299,8 +300,13 @@ function App() {
     const interval = (60 / metronome.bpm) * 1000;
     beatCountRef.current = 0;
     
+    // Set playing state immediately
+    setMetronome(prev => ({ ...prev, isPlaying: true }));
+    isPlayingRef.current = true;
+    
     intervalRef.current = setInterval(() => {
-      if (!metronome.isPlaying) return;
+      // Use a ref to track playing state to avoid stale closure issues
+      if (!isPlayingRef.current) return;
       
       const isFirstBeat = beatCountRef.current % metronome.beatsPerMeasure === 0;
       const shouldAccent = isFirstBeat && metronome.accentFirstBeat;
@@ -312,7 +318,7 @@ function App() {
         const subdivisionDelay = interval / metronome.subdivisionValue;
         for (let i = 1; i < metronome.subdivisionValue; i++) {
           setTimeout(() => {
-            if (metronome.isPlaying) {
+            if (isPlayingRef.current) {
               playSubdivision();
             }
           }, subdivisionDelay * i);
@@ -321,8 +327,6 @@ function App() {
       
       beatCountRef.current++;
     }, interval);
-    
-    setMetronome(prev => ({ ...prev, isPlaying: true }));
   };
 
   const stopMetronome = () => {
@@ -331,6 +335,7 @@ function App() {
       intervalRef.current = null;
     }
     setMetronome(prev => ({ ...prev, isPlaying: false }));
+    isPlayingRef.current = false;
   };
 
   const toggleMetronome = () => {
