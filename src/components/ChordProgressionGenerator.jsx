@@ -219,22 +219,22 @@ function randomProgression(mode) {
   return prog;
 }
 
-// Color themes for each mode (brightness/darkness)
+// Color themes for each mode (dark mode)
 const MODE_COLORS = {
-  'Major (Ionian)':      { bg: '#e8f5e8', text: '#2d5a2d', border: '#4a7c59' },
-  'Minor (Aeolian)':     { bg: '#f0e8f5', text: '#4a2d5a', border: '#7c4a7c' },
-  'Dorian':              { bg: '#e8f0f5', text: '#2d4a5a', border: '#4a7c7c' },
-  'Phrygian':            { bg: '#f5e8e8', text: '#5a2d2d', border: '#7c4a4a' },
-  'Lydian':              { bg: '#f5f0e8', text: '#5a4a2d', border: '#7c7c4a' },
-  'Mixolydian':          { bg: '#e8f5f0', text: '#2d5a4a', border: '#4a7c7c' },
-  'Locrian':             { bg: '#f0f0f0', text: '#4a4a4a', border: '#7c7c7c' },
+  'Major (Ionian)':      { bg: '#1a2e1a', text: '#90ee90', border: '#4a7c59' },
+  'Minor (Aeolian)':     { bg: '#2e1a2e', text: '#dda0dd', border: '#7c4a7c' },
+  'Dorian':              { bg: '#1a2e2e', text: '#87ceeb', border: '#4a7c7c' },
+  'Phrygian':            { bg: '#2e1a1a', text: '#f0a0a0', border: '#7c4a4a' },
+  'Lydian':              { bg: '#2e2e1a', text: '#f0e68c', border: '#7c7c4a' },
+  'Mixolydian':          { bg: '#1a2e1a', text: '#98fb98', border: '#4a7c7c' },
+  'Locrian':             { bg: '#2e2e2e', text: '#c0c0c0', border: '#7c7c7c' },
 };
 
-// Chord quality colors
+// Chord quality colors (brightened for dark mode)
 const CHORD_COLORS = {
-  'maj': '#2d5a2d',    // Dark green for major
-  'min': '#4a2d5a',    // Purple for minor
-  'dim': '#5a2d2d',    // Dark red for diminished
+  'maj': '#90ee90',    // Light green for major
+  'min': '#dda0dd',    // Light purple for minor
+  'dim': '#f0a0a0',    // Light red for diminished
 };
 
 function getChordColor(quality) {
