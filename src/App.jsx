@@ -148,10 +148,47 @@ function getRoman(degree, mode, quality) {
 }
 
 function getRelativeMajor(key, mode) {
-  // For minor modes, relative major is the 3rd degree
+  // For major mode, no relative major
   if (mode === 'Major (Ionian)') return null;
+  
+  // Get the scale for this key and mode
   const scale = getScaleNotesSpelled(key, mode);
-  return scale[2];
+  
+  // Different modes have different relative majors
+  let relativeMajor;
+  switch (mode) {
+    case 'Minor (Aeolian)':
+      relativeMajor = scale[2]; // 3rd degree (major third up)
+      break;
+    case 'Dorian':
+      relativeMajor = scale[6]; // 7th degree (minor seventh up)
+      break;
+    case 'Mixolydian':
+      relativeMajor = scale[3]; // 4th degree (perfect fourth up)
+      break;
+    case 'Phrygian':
+      relativeMajor = scale[5]; // 6th degree (major sixth up)
+      break;
+    case 'Lydian':
+      relativeMajor = scale[1]; // 2nd degree (major second up)
+      break;
+    case 'Locrian':
+      relativeMajor = scale[4]; // 5th degree (perfect fifth up)
+      break;
+    default:
+      return null;
+  }
+  
+  // Ensure proper enharmonic spelling
+  // Find the note in chromatic scale
+  let idx = CHROMATIC.indexOf(relativeMajor);
+  if (idx === -1) {
+    // Try enharmonic equivalents
+    idx = CHROMATIC.indexOf(ENHARMONIC[relativeMajor]);
+  }
+  
+  // Return the properly spelled note
+  return CHROMATIC[idx];
 }
 
 function randomProgression(mode) {
